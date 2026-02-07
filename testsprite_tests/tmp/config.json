@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:8000",
+  "backendAuthType": "public",
+  "executionArgs": {
+    "projectName": "ecommerce-api",
+    "projectPath": "F:\\ecommerce-api",
+    "testIds": [],
+    "additionalInstruction": "Run all TestSprite test cases for the e-commerce API. Focus on authentication, product management, cart operations, checkout process, order management, and payment processing. Handle test dependencies properly and ensure proper error reporting.",
+    "envs": {
+      "API_KEY": "sk-user-xVOKfTY1cgk9j9h6XH0MU3rsRP8rUsxxlpTOdj1lhr9NpOk6TJ_WSZpPPbN5N43hjNK9GxwxfjB_xpsUEg3tBMNxfNurw184-wTkCIqVeCB-K-LI2DDY2yDi6ou4xXJGFNI"
+    }
+  },
+  "serverPort": 61111,
+  "proxy": "http://4b122b2c-64dd-4f1c-9259-39d42999d5fc:aTPDgZdIJBZRT2PpYwWnN82qlgbRm8D3@tun.testsprite.com:8080"
+}

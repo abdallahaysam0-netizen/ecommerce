@@ -1,0 +1,221 @@
+{
+  "timestamp": "2026-02-09T14:59:57.909Z",
+  "duration": "2.7s",
+  "summary": {
+    "total": 7,
+    "passed": 4,
+    "failed": 3,
+    "successRate": "57.1"
+  },
+  "results": [
+    {
+      "id": "TC001",
+      "name": "User Registration",
+      "success": true,
+      "data": {
+        "message": "تم إنشاء الحساب بنجاح",
+        "user": {
+          "name": "TestSprite User",
+          "email": "testsprite_1770649194957@example.com",
+          "role": "customer"
+        },
+        "token": "63|o3DdG1HpVvceYY096fypjM8Ngd6FJ1EjP0VynT6A98583cc7"
+      }
+    },
+    {
+      "id": "TC002",
+      "name": "User Login",
+      "success": true,
+      "data": {
+        "message": "تم تسجيل الدخول بنجاح",
+        "token": "64|BT7OQQdgfsZzuXrSFGSVHetb2PMnrCMSbY9tR6fwa2d8990c",
+        "user": {
+          "id": 21,
+          "name": "TestSprite User",
+          "email": "testsprite_1770649194957@example.com",
+          "role": "customer"
+        }
+      }
+    },
+    {
+      "id": "TC004",
+      "name": "Products List",
+      "success": true,
+      "data": {
+        "success": true,
+        "message": "Products retrieved successfully",
+        "data": {
+          "current_page": 1,
+          "data": [
+            {
+              "id": 12,
+              "name": "Computer4",
+              "slug": "4355345",
+              "description": "Computer4.desc",
+              "price": 200000,
+              "final_price": 200000,
+              "discount_percentage": null,
+              "discount_amount": 0,
+              "discount_price": 0,
+              "stock": 18,
+              "sku": "SKU-1769331770720",
+              "is_active": true,
+              "image": "http://localhost:8000/storage/products/4355345",
+              "categories": [
+                {
+                  "id": 2,
+                  "name": "computers",
+                  "slug": "computers"
+                }
+              ]
+            },
+            {
+              "id": 10,
+              "name": "phoneA5",
+              "slug": "phonea5",
+              "description": "phoneA5.desc",
+              "price": 70000,
+              "final_price": 65000,
+              "discount_percentage": "7%",
+              "discount_amount": 5000,
+              "discount_price": 5000,
+              "stock": 18,
+              "sku": "SKU-1767419924894",
+              "is_active": true,
+              "image": "http://localhost:8000/storage/products/132",
+              "categories": [
+                {
+                  "id": 3,
+                  "name": "phones",
+                  "slug": "phones"
+                }
+              ]
+            },
+            {
+              "id": 9,
+              "name": "phoneA4",
+              "slug": "131",
+              "description": "phoneA4.desc",
+              "price": 20000,
+              "final_price": 20000,
+              "discount_percentage": null,
+              "discount_amount": 0,
+              "discount_price": 0,
+              "stock": 16,
+              "sku": "SKU-1767419891343",
+              "is_active": true,
+              "image": "http://localhost:8000/storage/products/131",
+              "categories": [
+                {
+                  "id": 3,
+                  "name": "phones",
+                  "slug": "phones"
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "name": "phoneA3",
+              "slug": "130",
+              "description": "phoneA3.desc",
+              "price": 20000,
+              "final_price": 20000,
+              "discount_percentage": null,
+              "discount_amount": 0,
+              "discount_price": 0,
+              "stock": 17,
+              "sku": "SKU-1767419694879",
+              "is_active": true,
+              "image": "http://localhost:8000/storage/products/130",
+              "categories": [
+                {
+                  "id": 3,
+                  "name": "phones",
+                  "slug": "phones"
+                }
+              ]
+            }
+          ],
+          "first_page_url": "http://localhost:8000/api/products?page=1",
+          "from": 1,
+          "last_page": 3,
+          "last_page_url": "http://localhost:8000/api/products?page=3",
+          "links": [
+            {
+              "url": null,
+              "label": "&laquo; Previous",
+              "page": null,
+              "active": false
+            },
+            {
+              "url": "http://localhost:8000/api/products?page=1",
+              "label": "1",
+              "page": 1,
+              "active": true
+            },
+            {
+              "url": "http://localhost:8000/api/products?page=2",
+              "label": "2",
+              "page": 2,
+              "active": false
+            },
+            {
+              "url": "http://localhost:8000/api/products?page=3",
+              "label": "3",
+              "page": 3,
+              "active": false
+            },
+            {
+              "url": "http://localhost:8000/api/products?page=2",
+              "label": "Next &raquo;",
+              "page": 2,
+              "active": false
+            }
+          ],
+          "next_page_url": "http://localhost:8000/api/products?page=2",
+          "path": "http://localhost:8000/api/products",
+          "per_page": 4,
+          "prev_page_url": null,
+          "to": 4,
+          "total": 12
+        }
+      }
+    },
+    {
+      "id": "TC007",
+      "name": "Add to Cart",
+      "success": false,
+      "data": {
+        "success": false,
+        "message": "Unauthenticated"
+      }
+    },
+    {
+      "id": "CART_VIEW",
+      "name": "Cart View",
+      "success": false,
+      "data": {
+        "success": false,
+        "message": "Unauthorized"
+      }
+    },
+    {
+      "id": "TC008",
+      "name": "Checkout",
+      "success": false,
+      "data": {
+        "status": false,
+        "message": "السلة فارغة"
+      }
+    },
+    {
+      "id": "TC009",
+      "name": "User Orders",
+      "success": true,
+      "data": {
+        "success": true,
+        "orders": []
+      }
+    }
+  ]
+}

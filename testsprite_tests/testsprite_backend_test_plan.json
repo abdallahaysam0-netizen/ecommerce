@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "register new user with valid data",
+    "description": "Test the /api/register endpoint to ensure a new user can be registered successfully with valid name, email, and password, returning HTTP 201."
+  },
+  {
+    "id": "TC002",
+    "title": "login user with correct credentials",
+    "description": "Test the /api/login endpoint to verify that a user can log in successfully with valid email and password, returning HTTP 200 and an authentication token."
+  },
+  {
+    "id": "TC003",
+    "title": "logout authenticated user",
+    "description": "Test the /api/auth/logout endpoint to ensure an authenticated user can log out successfully, invalidating the token and returning HTTP 200."
+  },
+  {
+    "id": "TC004",
+    "title": "list all products with pagination",
+    "description": "Test the /api/products GET endpoint to retrieve a paginated list of products, verifying the response structure and HTTP 200 status."
+  },
+  {
+    "id": "TC005",
+    "title": "create new product with valid data",
+    "description": "Test the /api/products POST endpoint to create a new product with valid name, price, stock, and optional category_id, ensuring HTTP 201 response."
+  },
+  {
+    "id": "TC006",
+    "title": "search products by query string",
+    "description": "Test the /api/products/search GET endpoint to search products by a query string parameter 'q', verifying the search results and HTTP 200 response."
+  },
+  {
+    "id": "TC007",
+    "title": "add item to cart with valid product and quantity",
+    "description": "Test the /api/cart POST endpoint to add an item to the shopping cart with valid product_id and quantity, ensuring inventory validation and HTTP 201 response."
+  },
+  {
+    "id": "TC008",
+    "title": "process checkout with valid shipping and payment details",
+    "description": "Test the /api/checkout POST endpoint to process checkout with complete shipping information and supported payment methods, verifying order creation and HTTP 201 response."
+  },
+  {
+    "id": "TC009",
+    "title": "list user orders",
+    "description": "Test the /api/orders GET endpoint to retrieve a list of orders for the authenticated user, verifying order details and HTTP 200 response."
+  },
+  {
+    "id": "TC010",
+    "title": "handle paymob payment webhook",
+    "description": "Test the /api/paymob/webhook POST endpoint to handle Paymob payment gateway webhook events, verifying correct processing and HTTP 200 response for valid webhooks."
+  }
+]

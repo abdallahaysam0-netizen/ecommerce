@@ -1,0 +1,785 @@
+{
+  "meta": {
+    "project": "E-Commerce API Platform",
+    "date": "2026-02-06",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "A robust and scalable REST API for an e-commerce platform built on Laravel 12.x with PHP 8.1+, designed to support multi-role user access, advanced product catalog and inventory management, comprehensive order and payment workflows, and administrative analytics for business insights.",
+  "core_goals": [
+    "Provide secure and seamless user authentication and role-based authorization.",
+    "Enable complete product catalog management including inventory and category hierarchies.",
+    "Support dynamic shopping cart management with real-time stock validation.",
+    "Offer flexible and robust checkout processes supporting multiple payment methods including Paymob integration.",
+    "Manage full order lifecycle including tracking, status updates, and history with enforced business rules.",
+    "Deliver administrative tools and dashboards for user, order, and system analytics management."
+  ],
+  "key_features": [
+    "User Authentication & Authorization with Laravel Sanctum including registration, login, logout, and role-based permissions for Admin, Customer, and Delivery.",
+    "Product Catalog Management with CRUD operations, search, filtering, category hierarchies, inventory control, and soft delete/restore capabilities.",
+    "Shopping Cart functionality allowing add, update, remove items with inventory validation and persistence.",
+    "Checkout & Payment Processing supporting COD, Credit Card via Paymob, Fawry, and Wallet payments with order creation, validation, and webhook integration.",
+    "Order Management System that tracks order lifecycle states, enforces status transition rules, handles cancellations with refunds and inventory restocking.",
+    "Admin Dashboard featuring user management, analytics (sales, orders, products, monthly metrics), and permission controls.",
+    "Payment Gateway Integration with Paymob including webhook handling and payment status synchronization."
+  ],
+  "user_flow_summary": [
+    "User Registration and Login flow with role assignment and secured token management.",
+    "Browsing and searching the product catalog with hierarchical category filters and stock availability display.",
+    "Adding products to the shopping cart with quantity management and real-time inventory validation.",
+    "Checkout process capturing shipping details, payment method selection, and order creation linked with appropriate payment flows.",
+    "Order tracking and history views for customers with real-time status updates.",
+    "Admin user managing products, orders, users, and viewing analytics dashboard for operational oversight and decision making.",
+    "Payment processing including instant order confirmation for COD and webhook-based confirmation for card payments."
+  ],
+  "validation_criteria": [
+    "User authentication must enforce secure registration, login, and role-based access control.",
+    "Product catalog APIs must validate input data, support pagination, and allow full CRUD with inventory tracking.",
+    "Shopping cart actions must validate product stock and quantity rules.",
+    "Checkout process must validate shipping and payment details and handle multiple payment methods correctly.",
+    "Order status changes must respect defined business rules and permissions with automatic inventory adjustments on cancellations.",
+    "Admin dashboard data must accurately reflect current system statistics and user privileges must be enforced.",
+    "Payment gateway integration must correctly handle webhook events and update order payment status reliably.",
+    "API endpoints must return appropriate HTTP status codes and error messages for validation failures and unauthorized access."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "PHP 8.1+",
+      "Laravel 12.x",
+      "MySQL",
+      "Laravel Sanctum (Authentication)",
+      "Paymob Payment Gateway",
+      "File-based Caching",
+      "Database Queues"
+    ],
+    "features": [
+      {
+        "name": "User Authentication & Authorization",
+        "description": "User registration, login, logout, and role-based access control with Laravel Sanctum",
+        "files": [
+          "app/Http/Controllers/Api/Auth/AuthController.php",
+          "app/Http/Middleware/EnsureUserIsAdmin.php",
+          "app/Http/Middleware/EnsureUserIsCustomer.php",
+          "app/Http/Middleware/CheckPermission.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Authentication API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/register": {
+              "post": {
+                "summary": "Register new user",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "password": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "email",
+                          "password"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "201": {
+                    "description": "User registered successfully"
+                  },
+                  "422": {
+                    "description": "Validation error"
+                  }
+                }
+              }
+            },
+            "/api/login": {
+              "post": {
+                "summary": "User login",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "email": {
+                            "type": "string"
+                          },
+                          "password": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "email",
+                          "password"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Login successful"
+                  },
+                  "401": {
+                    "description": "Invalid credentials"
+                  }
+                }
+              }
+            },
+            "/api/auth/logout": {
+              "post": {
+                "summary": "User logout",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Logged out successfully"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Product Catalog Management",
+        "description": "CRUD operations for products, categories, search, and inventory management",
+        "files": [
+          "app/Http/Controllers/Api/ProductController.php",
+          "app/Http/Controllers/CategoryController.php",
+          "app/Http/Controllers/OfferController.php",
+          "app/Models/Product.php",
+          "app/Models/Category.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Product Catalog API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/products": {
+              "get": {
+                "summary": "List all products",
+                "parameters": [
+                  {
+                    "name": "page",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of products",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "data": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "price": {
+                                    "type": "number"
+                                  },
+                                  "stock": {
+                                    "type": "integer"
+                                  },
+                                  "is_active": {
+                                    "type": "boolean"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "post": {
+                "summary": "Create new product",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "stock": {
+                            "type": "integer"
+                          },
+                          "category_id": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "price",
+                          "stock"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "201": {
+                    "description": "Product created"
+                  },
+                  "422": {
+                    "description": "Validation error"
+                  }
+                }
+              }
+            },
+            "/api/products/search": {
+              "get": {
+                "summary": "Search products",
+                "parameters": [
+                  {
+                    "name": "q",
+                    "in": "query",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Search results"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Shopping Cart Management",
+        "description": "Add, update, remove items from cart with inventory validation",
+        "files": [
+          "app/Http/Controllers/Api/CartController.php",
+          "app/Models/Cart.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Shopping Cart API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/cart": {
+              "get": {
+                "summary": "Get user's cart items",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Cart items",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "product_id": {
+                                "type": "integer"
+                              },
+                              "quantity": {
+                                "type": "integer"
+                              },
+                              "product": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "price": {
+                                    "type": "number"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "post": {
+                "summary": "Add item to cart",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "product_id": {
+                            "type": "integer"
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": 1
+                          }
+                        },
+                        "required": [
+                          "product_id",
+                          "quantity"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "201": {
+                    "description": "Item added to cart"
+                  },
+                  "422": {
+                    "description": "Validation error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Checkout & Payment Processing",
+        "description": "Order creation with multiple payment methods (COD, Credit Card, Fawry, Wallet)",
+        "files": [
+          "app/Http/Controllers/Api/CheckoutController.php",
+          "app/Http/Controllers/Api/PaymentController.php",
+          "app/Payments/PaymentService.php",
+          "app/Http/Controllers/Api/PaymobWebhookController.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Checkout & Payment API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/checkout": {
+              "post": {
+                "summary": "Process checkout and create order/payment",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "shipping_name": {
+                            "type": "string"
+                          },
+                          "shipping_address": {
+                            "type": "string"
+                          },
+                          "shipping_city": {
+                            "type": "string"
+                          },
+                          "shipping_state": {
+                            "type": "string"
+                          },
+                          "shipping_zipcode": {
+                            "type": "string"
+                          },
+                          "shipping_country": {
+                            "type": "string"
+                          },
+                          "shipping_phone": {
+                            "type": "string"
+                          },
+                          "payment_method": {
+                            "type": "string",
+                            "enum": [
+                              "cod",
+                              "credit_card",
+                              "fawry",
+                              "wallet"
+                            ]
+                          },
+                          "notes": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "shipping_name",
+                          "shipping_address",
+                          "shipping_city",
+                          "shipping_state",
+                          "shipping_zipcode",
+                          "shipping_country",
+                          "shipping_phone",
+                          "payment_method"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "201": {
+                    "description": "Order created successfully",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "boolean"
+                            },
+                            "payment_required": {
+                              "type": "boolean"
+                            },
+                            "order_id": {
+                              "type": "integer"
+                            },
+                            "order_number": {
+                              "type": "string"
+                            },
+                            "data": {
+                              "type": "object"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Order Management",
+        "description": "Order tracking, status updates, and history management",
+        "files": [
+          "app/Http/Controllers/Api/OrderManagementController.php",
+          "app/Models/Order.php",
+          "app/Models/OrderItem.php",
+          "app/Enum/OrderStatus.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Order Management API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/orders": {
+              "get": {
+                "summary": "List user's orders",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of orders",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "order_number": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "total": {
+                                "type": "number"
+                              },
+                              "created_at": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/orders/pending": {
+              "get": {
+                "summary": "List pending orders (instant payments)",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Pending orders"
+                  }
+                }
+              }
+            },
+            "/api/orders/{order}": {
+              "get": {
+                "summary": "Get order details",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "parameters": [
+                  {
+                    "name": "order",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "integer"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Order details"
+                  },
+                  "403": {
+                    "description": "Unauthorized"
+                  },
+                  "404": {
+                    "description": "Order not found"
+                  }
+                }
+              },
+              "patch": {
+                "summary": "Update order status (Admin only)",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Status updated"
+                  },
+                  "403": {
+                    "description": "Unauthorized"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Admin Dashboard & Analytics",
+        "description": "Administrative functions including user management, analytics, and system oversight",
+        "files": [
+          "app/Http/Controllers/Api/UserController.php",
+          "routes/api.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Admin Dashboard API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/users": {
+              "get": {
+                "summary": "List all users (Admin only)",
+                "security": [
+                  {
+                    "bearerAuth": []
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of users"
+                  },
+                  "403": {
+                    "description": "Unauthorized"
+                  }
+                }
+              }
+            },
+            "/api/admin/stats": {
+              "get": {
+                "summary": "Get system statistics",
+                "responses": {
+                  "200": {
+                    "description": "Statistics data",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "sales": {
+                              "type": "number"
+                            },
+                            "orders": {
+                              "type": "integer"
+                            },
+                            "products": {
+                              "type": "integer"
+                            },
+                            "monthlySales": {
+                              "type": "array"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Payment Gateway Integration",
+        "description": "Paymob payment gateway integration with webhook handling",
+        "files": [
+          "app/Payments/PaymentService.php",
+          "app/Http/Controllers/Api/PaymobWebhookController.php",
+          "config/services.php"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Payment Gateway API",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/api/paymob/webhook": {
+              "post": {
+                "summary": "Handle Paymob payment webhooks",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "obj": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Webhook processed"
+                  },
+                  "400": {
+                    "description": "Invalid webhook"
+                  }
+                }
+              },
+              "get": {
+                "summary": "Handle Paymob redirect responses",
+                "parameters": [
+                  {
+                    "name": "success",
+                    "in": "query",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ],
+                "responses": {
+                  "302": {
+                    "description": "Redirect to frontend"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
