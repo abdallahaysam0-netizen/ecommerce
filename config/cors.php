@@ -13,6 +13,7 @@ return [
 'allowed_origins' => [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'https://myshop.vercel.app',
     'https://marisa-nonretired-willis.ngrok-free.dev', // الرابط الحالي الخاص بك بدقة
     'https://*.ngrok-free.app',                       // احتياطاً لنطاقات ngrok الجديدة
     'https://*.ngrok-free.dev',
