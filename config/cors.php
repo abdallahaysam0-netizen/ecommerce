@@ -8,6 +8,8 @@ return [
     |--------------------------------------------------------------------------
     */
 // config/cors.php
+'allowed_headers' => ['*', 'ngrok-skip-browser-warning'], // لازم تضيف الهيدر ده هنا بالاسم
+'exposed_headers' => [],
 'paths' => ['api/*', 'broadcasting/auth', 'sanctum/csrf-cookie'],
 'allowed_methods' => ['*'],
 'allowed_origins' => [
