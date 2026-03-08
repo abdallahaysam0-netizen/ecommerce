@@ -8,8 +8,10 @@ return [
     'allowed_methods' => ['*'],
 
     // السماح لجميع الروابط عشان متتعبش مع تغيير لينكات Vercel و Ngrok
-    'allowed_origins' => ['*'],
-
+'allowed_origins' => [
+    'https://myshop-frontend-git-master-abdallahaysam0-netizens-projects.vercel.app',
+    'https://myshop-frontend-abdallahaysam0-netizens-projects.vercel.app' // الرابط الأساسي بدون كلمة git-master
+],
     'allowed_origins_patterns' => [],
 
     // السماح بجميع الهيدرز (مهم جداً عشان هيدر ngrok اللي ضفناه)
