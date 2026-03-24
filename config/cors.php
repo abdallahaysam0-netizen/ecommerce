@@ -9,8 +9,11 @@ return [
 
     // السماح لجميع الروابط عشان متتعبش مع تغيير لينكات Vercel و Ngrok
 'allowed_origins' => [
+    'http://localhost:3000', // إذا كنت تشغل React على هذا المنفذ
+    'http://127.0.0.1:8000', // الرابط الافتراضي لـ php artisan serve
+    'http://localhost',      // رابط XAMPP الافتراضي
     'https://myshop-frontend-git-master-abdallahaysam0-netizens-projects.vercel.app',
-    'https://myshop-frontend-abdallahaysam0-netizens-projects.vercel.app' // الرابط الأساسي بدون كلمة git-master
+    'https://myshop-frontend-abdallahaysam0-netizens-projects.vercel.app'
 ],
     'allowed_origins_patterns' => [],
 
