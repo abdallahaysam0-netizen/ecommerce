@@ -1,6 +1,6 @@
 # 🚀 Ecommerce API - Managed with Laravel 12
 
-A powerful, real-time, and secure Ecommerce API built with **Laravel 12**. This project features advanced payment integrations (Paymob & Stripe), real-time notifications via **Laravel Reverb**, and a robust role-based access control system.
+A powerful, real-time, and secure Ecommerce API built with **Laravel 12**. This project features advanced payment integrations (Paymob), real-time notifications via **Laravel Reverb**, and a robust role-based access control system.
 
 ---
 
@@ -32,7 +32,7 @@ A powerful, real-time, and secure Ecommerce API built with **Laravel 12**. This 
 - **Real-time**: [Laravel Reverb](https://laravel.com/docs/reverb)
 - **Auth**: [Laravel Sanctum](https://laravel.com/docs/sanctum)
 - **Permissions**: [Spatie Permission](https://spatie.be/docs/laravel-permission)
-- **Payments**: Paymob & Stripe SDKs
+- **Payments**: Paymob 
 - **Testing**: [Pest PHP](https://pestphp.com)
 
 ---
