@@ -29,7 +29,7 @@ class PaymentController extends Controller
             ], 400);
         }
 
-        // استلام نوع الدفع من الـ Frontend (مثل: fawry, card, wallet)
+        // استلام نوع الدفع من الـ Frontend (مثل: fawry, card)
         $method = $request->input('method', 'card');
 
         // تمرير النوع للخدمة لكي تختار الـ Integration ID الصحيح

@@ -12,6 +12,7 @@ enum OrderStatus: string
     case DELIVERED  = 'delivered';
     case COMPLETED  = 'completed';   // بعد التأكيد النهائي على التسليم
     case CANCELLED  = 'cancelled';
+    case REFUNDED   = 'refunded';
 
     // ✅ الدالة التي كانت تسبب الخطأ في الإشعارات
     public function getLabel(): string
@@ -25,6 +26,7 @@ enum OrderStatus: string
             self::DELIVERED  => 'تم التوصيل',
             self::COMPLETED  => 'مكتمل',
             self::CANCELLED  => 'ملغي',
+            self::REFUNDED   => 'تم الاسترجاع',
         };
     }
     // قائمة القيم كـ string
@@ -45,17 +47,18 @@ public function allowedTransitions(): array
         // حالة قيد الدفع يمكن أن تتأكد أو تُلغى
         self::PENDING_PAYMENT => [self::CONFIRMED, self::CANCELLED],
         
-        self::CONFIRMED => [self::PROCESSING, self::CANCELLED],
+        self::CONFIRMED => [self::PROCESSING, self::CANCELLED, self::REFUNDED],
         
         // جاري التجهيز يمكن أن يشحن أو يلغى (لو حدثت مشكلة في التغليف)
         self::PROCESSING => [self::SHIPPED, self::CANCELLED],
         
         self::SHIPPED => [self::DELIVERED, self::CANCELLED],
         
-        self::DELIVERED => [self::COMPLETED],
+        self::DELIVERED => [self::COMPLETED, self::REFUNDED],
         
-        self::COMPLETED => [],
+        self::COMPLETED => [self::REFUNDED],
         self::CANCELLED => [],
+        self::REFUNDED  => [],
     };
 }
     // التحقق من إمكانية الانتقال إلى حالة أخرى

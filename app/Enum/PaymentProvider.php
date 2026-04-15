@@ -6,6 +6,7 @@ enum PaymentProvider: string
 {
     case PAYMOB = 'paymob';  // صحح الكتابة من 'poymob' إلى 'paymob'
     case PAYPAL = 'paypal';
+    case STRIPE = 'stripe';
 
     public static function values(): array
     {

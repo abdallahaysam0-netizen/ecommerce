@@ -2,7 +2,7 @@
 
 return [
     // المسارات اللي بنطبق عليها الـ CORS
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
 
     // السماح لكل أنواع الطلبات (GET, POST, etc)
     'allowed_methods' => ['*'],

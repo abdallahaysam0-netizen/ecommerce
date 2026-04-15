@@ -14,7 +14,7 @@ class PaymobGateway implements PaymentGateway
     // القاعدة الذهبية: توحيد الرابط لـ egypt لضمان توافق التوقيع الرقمي
     private string $baseUrl = 'https://accept.paymob.com/api';
 
-    public function authorize(Payment $payment, string $method = 'card'): PaymentResult
+    public function processPayment(Payment $payment, string $method = 'card'): PaymentResult
     {
         try {
             // 1️⃣ الحصول على الـ Auth Token
@@ -42,7 +42,7 @@ class PaymobGateway implements PaymentGateway
         }
     }
 
-    public function refund(string $transactionId, int $amount): bool
+    public function refund(string $transactionId, float $amount): bool
     {
         try {
             $token = $this->getAuthToken();
@@ -63,7 +63,7 @@ class PaymobGateway implements PaymentGateway
 
     private function getAuthToken(): string
     {
-        $response = Http::post("{$this->baseUrl}/auth/tokens", [
+        $response = Http::timeout(30)->retry(3, 100)->post("{$this->baseUrl}/auth/tokens", [
             'api_key' => config('services.paymob.api_key'),
         ]);
 
@@ -73,7 +73,7 @@ class PaymobGateway implements PaymentGateway
 
     private function createPaymobOrder(string $token, Payment $payment): int
     {
-        $response = Http::post("{$this->baseUrl}/ecommerce/orders", [
+        $response = Http::timeout(30)->retry(3, 100)->post("{$this->baseUrl}/ecommerce/orders", [
             'auth_token' => $token,
             'delivery_needed' => false,
             'amount_cents' => (int) round($payment->amount * 100),
@@ -88,10 +88,11 @@ class PaymobGateway implements PaymentGateway
 
     private function getPaymentKey(string $token, int $paymobOrderId, Payment $payment, int $integrationId): string
     {
-        $shipping = $payment->order ? $payment->order->toArray() : ($payment->metadata['shipping'] ?? []);
+        $checkoutData = $payment->metadata['checkout_data'] ?? null;
+        $shipping = $payment->order ? $payment->order->toArray() : ($checkoutData['shipping'] ?? $payment->metadata['shipping'] ?? []);
         $names = $this->splitName($shipping['shipping_name'] ?? 'Customer Guest');
 
-        $response = Http::post("{$this->baseUrl}/acceptance/payment_keys", [
+        $response = Http::timeout(30)->retry(3, 100)->post("{$this->baseUrl}/acceptance/payment_keys", [
             'auth_token'   => $token,
             'amount_cents' => (int) round($payment->amount * 100),
             'expiration'   => 3600,
@@ -126,16 +127,18 @@ class PaymobGateway implements PaymentGateway
             ]);
         }
 
-        $phone = $payment->order ? $payment->order->shipping_phone : ($payment->metadata['shipping']['shipping_phone'] ?? null);
+        $checkoutData = $payment->metadata['checkout_data'] ?? null;
+        $shipping = $checkoutData ? ($checkoutData['shipping'] ?? []) : ($payment->metadata['shipping'] ?? []);
+        
+        $phone = $payment->order ? $payment->order->shipping_phone : ($shipping['shipping_phone'] ?? null);
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
 
         $source = match($method) {
             'fawry'  => ['identifier' => 'AGGREGATOR', 'subtype' => 'AGGREGATOR'],
-            'wallet' => ['identifier' => $cleanPhone, 'subtype' => 'WALLET'],
             default  => throw new \Exception('Unsupported payment method'),
         };
 
-        $response = Http::post("{$this->baseUrl}/acceptance/payments/pay", [
+        $response = Http::timeout(30)->retry(2, 100)->post("{$this->baseUrl}/acceptance/payments/pay", [
             'source' => $source,
             'payment_token' => $paymentKey,
         ]);
@@ -146,11 +149,16 @@ class PaymobGateway implements PaymentGateway
         }
 
         $data = $response->json();
+        $redirectUrl = $data['redirect_url'] ?? $data['iframe_redirection_url'] ?? $data['data']['redirect_url'] ?? null;
+
+        if (!$redirectUrl) {
+            Log::error("Paymob {$method} Redirect URL missing in response", ['response' => $data]);
+        }
 
         return new PaymentResult(true, "{$method} initiated", [
             'payment_type'   => $method,
             'bill_reference' => $data['data']['bill_reference'] ?? null,
-            'redirect_url'   => $data['redirect_url'] ?? $data['iframe_redirection_url'] ?? null,
+            'redirect_url'   => $redirectUrl,
         ]);
     }
 
@@ -158,7 +166,6 @@ class PaymobGateway implements PaymentGateway
     {
         return match($method) {
             'fawry'  => (int) config('services.paymob.fawry_integration_id'),
-            'wallet' => (int) config('services.paymob.wallet_integration_id'),
             default  => (int) config('services.paymob.card_integration_id'),
         };
     }

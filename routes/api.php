@@ -157,11 +157,7 @@ Route::middleware(['auth:sanctum', 'permission:delete users'])->group(function (
 
 });
 
-// ✅ الـ Webhook لازم يكون هنا (Public) عشان Paymob يقدر يوصله
-Route::post('paymob/webhook', [PaymobWebhookController::class, 'handle']);
-
-        // Categories Management
-
+// Categories Management
         Route::prefix('categories')->group(function () {
 
             Route::post('/', [CategoryController::class, 'store'])->middleware('permission:create categories');
@@ -181,7 +177,6 @@ Route::post('paymob/webhook', [PaymobWebhookController::class, 'handle']);
     |--------------------------------------------------------------------------
 
     */
-
 
 
     // Cart Management
@@ -204,18 +199,14 @@ Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
 
 
 
-    // Payments
-
-    Route::prefix('payments')->group(function () {
-
- 
-
-        Route::post('/refund', [RefundController::class, 'refund'])->name('payments.refund');
-
-    });
 
 
 
+// ✅ مسارات الدفع والـ Webhooks (بيني وبين بوابات الدفع)
+Route::match(['get', 'post'], 'paymob/webhook', [PaymobWebhookController::class, 'handle']);
+Route::post('fawry/webhook', [\App\Http\Controllers\Api\FawryWebhookController::class, 'handle']);
+Route::get('payment/stripe/success', [CheckoutController::class, 'stripeSuccess']);
+    
  // 🔹 Checkout & Payment (يجب تسجيل الدخول)
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -242,8 +233,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/{order}', [OrderManagementController::class, 'show']);
 
-        Route::patch('/{order}/status', [OrderManagementController::class, 'updateStatus']); //
+        Route::patch('/{order}/status', [OrderManagementController::class, 'updateStatus']); 
+
+        Route::post('/{order}/cancel', [OrderManagementController::class, 'cancel']);
     }); // إغلاق مجموعة الـ prefix
+
+    // Refund Route
+    Route::post('/refund', [RefundController::class, 'refund']);
 
 });
  // إغلاق مجموعة الـ middleware
@@ -272,3 +268,5 @@ Route::middleware('auth:sanctum')->get('/notifications', function (Request $requ
 });
 // مسار العروض منفصل تماماً
 Route::get('products-offers', [OfferController::class, 'index']);
+
+

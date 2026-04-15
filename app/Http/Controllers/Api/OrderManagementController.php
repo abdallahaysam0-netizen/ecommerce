@@ -14,18 +14,16 @@ use Illuminate\Support\Facades\DB;
 use App\Payments\PaymentService;
 use App\Payments\Strategies\VisaPaymentStrategy;
 use App\Payments\Strategies\FawryPaymentStrategy;   
-use App\Payments\Strategies\WalletPaymentStrategy;
 use App\Payments\Strategies\CodPaymentStrategy;
+use App\Payments\Strategies\StripePaymentStrategy;
 class OrderManagementController extends Controller
 {
     // 1️⃣ تعريف الخاصية لكي يراها الكنترولر
-    protected $paymentService;
-
     // 2️⃣ حقن الخدمة داخل دالة البناء
-    public function __construct(PaymentService $paymentService)
-    {
-        $this->paymentService = $paymentService;
-    }
+    public function __construct(
+        protected PaymentService $paymentService,
+        protected \App\Inventory\StockManager $stockManager
+    ) {}
     // 🔹 عرض جميع الطلبات للمستخدم أو admin
     public function index(Request $request)
     {
@@ -84,13 +82,13 @@ public function updateStatus(Request $request, Order $order)
         $strategy = match($paymentMethod) {
             'visa'   => new VisaPaymentStrategy(),
             'fawry'  => new FawryPaymentStrategy(),
-            'wallet' => new WalletPaymentStrategy(),
             'cod'    => new CodPaymentStrategy(),
+            'stripe' => new StripePaymentStrategy(),
             default  => throw new \Exception("طريقة دفع غير مدعومة: {$paymentMethod}")
         };
 
-        // 5. تنفيذ التحديث
-        $strategy->updateStatus($order, $user);
+        // 5. تنفيذ التحديث بتمرير البيانات المرسلة
+        $strategy->updateStatus($order, $user, $request->all());
 
         return response()->json([
             'success' => true, 
@@ -154,9 +152,7 @@ public function cancel(Order $order, Request $request)
         ]);
 
         // 5. إرجاع المخزون (Inventory Restock)
-        foreach ($order->items as $item) {
-            $item->product->increment('stock', $item->quantity);
-        }
+        $this->stockManager->restore($order);
 
         DB::commit();
 

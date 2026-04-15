@@ -13,23 +13,35 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use App\Inventory\StockManager;
+
 class PaymobWebhookController extends Controller
 {
+    protected StockManager $stockManager;
+
+    public function __construct(StockManager $stockManager)
+    {
+        $this->stockManager = $stockManager;
+    }
+
     public function handle(Request $request)
     {
-        // 1. التحقق من أمان الإشارة القادمة (HMAC) قبل أي معالجة
+        // 1. Handle Response Callback / Redirection
+        if ($request->isMethod('get')) {
+            if (!$this->validateHmac($request)) {
+                Log::warning('Paymob Redirect: HMAC validation failed for redirection URL.');
+            }
+            $success = $request->query('success') === 'true';
+            return redirect()->to(env('FRONTEND_URL', 'http://localhost:3000') . "/orders?status=" . ($success ? 'success' : 'failed'));
+        }
+
+        // 2. التحقق من أمان الإشارة للـ Webhook (POST) - هنا إلزامي للأمان
         if (!$this->validateHmac($request)) {
-            Log::warning('Paymob Webhook: محاولة وصول غير مصرح بها (Invalid HMAC).');
+            Log::error('Paymob Webhook: Unauthorized access attempt (Invalid HMAC).');
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $payload = $request->all();
-
-        // 2. التعامل مع "رابط العودة" (Response Callback) لتوجيه المستخدم للـ React
-        if ($request->isMethod('get')) {
-            $success = $request->query('success') === 'true';
-            return redirect()->to("http://localhost:3000/orders?status=" . ($success ? 'success' : 'failed'));
-        }
 
         // 3. استخراج البيانات الأساسية للعملية (Processed Callback)
         $success = $payload['obj']['success'] ?? false;
@@ -59,61 +71,66 @@ class PaymobWebhookController extends Controller
         // 5. في حالة نجاح الدفع -> تنفيذ العمليات المالية
         DB::beginTransaction();
         try {
-            $user = $payment->user;
-            $cartItems = Cart::where('user_id', $user->id)->with('product')->get();
+            $order = $payment->order;
 
-            if ($cartItems->isEmpty()) {
-                throw new \Exception("سلة العميل فارغة، لا يمكن إنشاء طلب.");
-            }
+            // إذا لم يكن هناك طلب مرتبط بعد (الحالة الجديدة)، نقوم بإنشائه من الـ Metadata
+            if (!$order) {
+                $checkoutData = $payment->metadata['checkout_data'] ?? null;
+                if (!$checkoutData) {
+                    throw new \Exception("بيانات الطلب مفقودة في سجل الدفع (Metadata).");
+                }
 
-            // أ- إنشاء الطلب النهائي (Order)
-            $order = Order::create([
-                'user_id'          => $user->id,
-                'order_number'     => Order::generateOrderNumber(),
-                'subtotal'         => $payment->amount,
-                'total'            => $payment->amount,
-                'payment_method'   => 'credit_card',
-                'payment_status'   => PaymentStatus::PAID,
-                'status'           => OrderStatus::CONFIRMED,
-                'transaction_id'   => $paymobTransactionId,
-                'paid_at'          => now(),
-                'shipping_name'    => $payment->metadata['shipping']['shipping_name'] ?? 'N/A',
-                'shipping_address' => $payment->metadata['shipping']['shipping_address'] ?? 'N/A',
-                'shipping_city'    => $payment->metadata['shipping']['shipping_city'] ?? 'N/A',
-                'shipping_phone'   => $payment->metadata['shipping']['shipping_phone'] ?? 'N/A',
-                
-                // ✅ إضافة هذه الحقول الإجبارية بناءً على الـ Schema الخاص بك
-                'shipping_zipcode' => $payment->metadata['shipping']['shipping_zipcode'] ?? '00000',
-                'shipping_country' => $payment->metadata['shipping']['shipping_country'] ?? 'Egypt',
-                'shipping_state'   => $payment->metadata['shipping']['shipping_state'] ?? 'N/A', // nullable في السكيما لكن يفضل إرساله
-            ]);
+                $shipping = $checkoutData['shipping'];
 
-            // ب- إنشاء العناصر وتحديث المخزون
-            foreach ($cartItems as $item) {
-                $order->items()->create([
-                    'product_id'   => $item->product->id,
-                    'product_name' => $item->product->name,
-                    'price'        => $item->product->price,
-                    'quantity'     => $item->quantity,
-                    'subtotal'     => $item->product->price * $item->quantity,
+                $order = Order::create([
+                    'user_id'          => $payment->user_id,
+                    'order_number'     => Order::generateOrderNumber(),
+                    'subtotal'         => $checkoutData['subtotal'],
+                    'tax'              => $checkoutData['tax'],
+                    'shipping_cost'    => $checkoutData['shipping_cost'],
+                    'total'            => $checkoutData['total'],
+                    'payment_method'   => $checkoutData['payment_method'],
+                    'payment_status'   => PaymentStatus::PAID,
+                    'status'           => OrderStatus::CONFIRMED,
+                    'shipping_name'    => $shipping['shipping_name'],
+                    'shipping_address' => $shipping['shipping_address'],
+                    'shipping_city'    => $shipping['shipping_city'],
+                    'shipping_state'   => $shipping['shipping_state'],
+                    'shipping_zipcode' => $shipping['shipping_zipcode'],
+                    'shipping_country' => $shipping['shipping_country'],
+                    'shipping_phone'   => $shipping['shipping_phone'],
+                    'notes'            => $shipping['notes'],
+                    'transaction_id'   => $paymobTransactionId,
+                    'paid_at'          => now(),
                 ]);
 
-                $item->product->decrement('stock', $item->quantity);
+                // ربط الدفع بالطلب المكتمل
+                $payment->update(['order_id' => $order->id]);
+
+                // إنشاء عناصر الطلب وخصم المخزون
+                foreach ($checkoutData['items'] as $item) {
+                    $order->items()->create([
+                        'product_id'   => $item['product_id'],
+                        'product_name' => $item['product_name'],
+                        'price'        => $item['price'],
+                        'quantity'     => $item['quantity'],
+                        'subtotal'     => $item['price'] * $item['quantity'],
+                    ]);
+                }
+
+                $this->stockManager->withdraw($order);
+                Cart::where('user_id', $payment->user_id)->delete();
             }
 
-            // ج- تحديث سجل الدفع وربطه بالطلب
+            // تحديث سجل الدفع
             $payment->update([
-                'order_id'          => $order->id,
                 'status'            => PaymentStatus::PAID,
                 'payment_intent_id' => $paymobTransactionId,
                 'completed_at'      => now(),
             ]);
 
-            // د- تفريغ السلة
-            Cart::where('user_id', $user->id)->delete();
-
             DB::commit();
-            return response()->json(['message' => 'تم إنشاء الطلب وربط الدفع بنجاح']);
+            return response()->json(['message' => 'تم إنشاء الطلب وتأكيد الدفع بنجاح']);
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -162,7 +179,17 @@ class PaymobWebhookController extends Controller
     
         $secret = config('services.paymob.hmac_secret');
         $hashing = hash_hmac('sha512', $string, $secret);
+
+        if (!hash_equals($hashing, $hmac)) {
+            Log::debug('Paymob HMAC Debug:', [
+                'generated_string' => $string,
+                'calculated_hmac' => $hashing,
+                'received_hmac' => $hmac,
+                'method' => $request->method()
+            ]);
+            return false;
+        }
     
-        return hash_equals($hashing, $hmac);
+        return true;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Payments;
 
 use App\Models\Payment;
 use App\Payments\Contracts\PaymentGateway;
+use App\Payments\Gateways\StripeGateway;
 use App\Payments\DTO\PaymentResult;
 
 class PaymentService
@@ -17,14 +18,25 @@ class PaymentService
         $this->paymob = $paymob;
     }
 
-    public function pay(Payment $payment, string $method = 'card'): PaymentResult
+    public function pay(Payment $payment, string $method = 'card', string $gateway = 'paymob'): PaymentResult
     {
-        // السطر 32 كان يشتكي لأن $this->paymob غير موجودة أو مسماة بشكل خاطئ
-        return $this->paymob->authorize($payment, $method);
+        $paymentGateway = $this->resolveGateway($gateway);
+        return $paymentGateway->processPayment($payment, $method);
     }
 
-    public function refund(string $transactionId, int $amount): bool
+    public function refund(string $transactionId, float $amount, string $gateway = 'paymob'): bool
     {
-        return $this->paymob->refund($transactionId, $amount);
+        $paymentGateway = $this->resolveGateway($gateway);
+        return $paymentGateway->refund($transactionId, $amount);
+    }
+
+    protected function resolveGateway(string $gateway): PaymentGateway
+    {
+        if ($gateway === 'stripe') {
+            return app(StripeGateway::class);
+        }
+
+        // الافتراضي هو بوابات الدفع paymob
+        return $this->paymob;
     }
 }

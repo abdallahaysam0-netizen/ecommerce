@@ -40,7 +40,6 @@ return [
         'api_key' => env('PAYMOB_API_KEY'),
         'card_integration_id' => env('PAYMOB_CARD_INTEGRATION_ID'),
         'fawry_integration_id' => env('PAYMOB_FAWRY_ID'),
-        'wallet_integration_id' => env('PAYMOB_WALLET_ID'),
         'iframe_id' => env('PAYMOB_IFRAME_ID'),
         'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
     ],

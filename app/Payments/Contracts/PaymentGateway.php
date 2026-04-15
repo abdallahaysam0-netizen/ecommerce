@@ -11,10 +11,10 @@ interface PaymentGateway
      * Start payment process
      * ✅ تعديل التوقيع ليتوافق مع الكلاس
      */
-    public function authorize(Payment $payment, string $method = 'card'): PaymentResult;
+    public function processPayment(Payment $payment, string $method = 'card'): PaymentResult;
         
     /**
      * Refund payment
      */
-    public function refund(string $transactionId, int $amount): bool;
+    public function refund(string $transactionId, float $amount): bool;
 }

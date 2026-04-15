@@ -43,17 +43,32 @@ public function user()
             'status' => PaymentStatus::PAID,
             'payment_intent_id' => $paymentIntentId,
             'completed_at' => now(),
-            'metadata' => array_merge($this->$metadata ?? [], $metadata),
+            'metadata' => array_merge($this->metadata ?? [], $metadata),
         ]);
-        $this->order->markAsPaid($paymentIntentId);
+        
+        // Refresh order relationship to ensure it's available in memory
+        if ($this->order_id) {
+            $this->load('order');
+        }
+
+        if ($this->order) {
+            $this->order->markAsPaid($paymentIntentId);
+        }
     }
     public function markAsFailed($metadata = [])
     {
         $this->update([
             'status' => PaymentStatus::FAILED,
-            'metadata' => array_merge($this->$metadata ?? [], $metadata),
+            'metadata' => array_merge($this->metadata ?? [], $metadata),
         ]);
-        $this->order->markAsFailed();
+
+        if ($this->order_id) {
+            $this->load('order');
+        }
+
+        if ($this->order) {
+            $this->order->markAsFailed();
+        }
     }
     public function isFinal()
     {
