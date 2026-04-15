@@ -100,18 +100,7 @@ The API endpoints are organized under the `api/` prefix. Key routes include:
 - `POST /api/checkout`
 - `POST /api/orders/{order}/cancel` (Customer self-cancel)
 - `PATCH /api/orders/{order}/status` (Admin only)
-
----
-
-## 🧪 Testing
-
-Run the test suite using Pest:
-```bash
-php artisan test
-```
-
----
-
 ## 📄 License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).
+
