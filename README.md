@@ -40,7 +40,7 @@ A powerful, real-time, and secure Ecommerce API built with **Laravel 12**. This 
 - **Permissions**: [Spatie Permission](https://spatie.be/docs/laravel-permission)
 - **Payments**: Paymob & Stripe SDKs
 - **Monitoring**: Laravel Telescope (Optional)
-- **Testing**: [Pest PHP](https://pestphp.com)
+
 
 ---
 
